@@ -1,0 +1,53 @@
+import weka.classifiers.trees.RandomForest;
+import weka.core.Instances;
+import weka.core.converters.CSVLoader;
+
+import java.io.File;
+
+public class StockPrediction {
+
+    static final int OUTPERFORMANCE = 10;
+
+    public static void main(String[] args) throws Exception {
+        System.out.println("Building dataset and predicting stocks...");
+        predictStocks();
+    }
+
+    public static void predictStocks() throws Exception {
+        Instances trainData = buildDataSet("keystats.csv");
+        Instances testData = buildDataSet("forward_sample.csv");
+
+        RandomForest classifier = new RandomForest();
+        classifier.setNumTrees(100);
+        classifier.buildClassifier(trainData);
+
+        int numInstances = testData.numInstances();
+        int[] predictions = new int[numInstances];
+
+        for (int i = 0; i < numInstances; i++) {
+            double[] instanceValues = testData.instance(i).toDoubleArray();
+            double prediction = classifier.classifyInstance(testData.instance(i));
+            predictions[i] = (int) prediction;
+        }
+
+        int sumPredicted = 0;
+        for (int pred : predictions) {
+            sumPredicted += pred;
+        }
+
+        if (sumPredicted == 0) {
+            System.out.println("No stocks predicted!");
+        } else {
+            System.out.println(sumPredicted + " stocks predicted to outperform the S&P500 by more than " + OUTPERFORMANCE + "%:");
+            // Print the tickers or further processing
+        }
+    }
+
+    public static Instances buildDataSet(String filePath) throws Exception {
+        CSVLoader loader = new CSVLoader();
+        loader.setSource(new File(filePath));
+        Instances data = loader.getDataSet();
+        // Process data, remove missing values, select relevant attributes, etc.
+        return data;
+    }
+}
